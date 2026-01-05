@@ -6,7 +6,7 @@ on:
       windows_file:
         required: false
         type: string
-        default: change-windows.yml
+        default: .github/change-windows.yml
       timezone:
         required: false
         type: string
@@ -21,7 +21,7 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout policy repo
+      - name: Checkout caller repository
         uses: actions/checkout@v4
 
       - name: Get changed files
@@ -29,7 +29,6 @@ jobs:
         uses: tj-actions/changed-files@v45
 
       - name: Detect /prod/ changes
-        id: detect
         run: |
           PROD_CHANGED=false
           for f in ${{ steps.changes.outputs.all_changed_files }}; do
@@ -41,16 +40,16 @@ jobs:
           done
           echo "PROD_CHANGED=$PROD_CHANGED" >> $GITHUB_ENV
 
-      - name: Install yq
-        run: |
-          sudo wget -qO /usr/bin/yq \
-            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-          sudo chmod +x /usr/bin/yq
-
       - name: Check Change Assurance Window
-        id: date-check
         shell: bash
         run: |
+          # Skip if the file is missing
+          if [ ! -f "${{ inputs.windows_file }}" ]; then
+            echo "⚠️ No change-windows.yml found at '${{ inputs.windows_file }}'. Skipping enforcement."
+            echo "IN_CA_WINDOW=false" >> $GITHUB_ENV
+            exit 0
+          fi
+
           NOW=$(TZ=${{ inputs.timezone }} date +%s)
           IN_WINDOW=false
 
@@ -80,14 +79,14 @@ jobs:
           gh pr comment ${{ github.event.pull_request.number }} --body "
           🚫 **Production Change Denied**
 
-          Changes have been detected in a **prod** path.  
+          Changes have been detected in a **prod** path.
           A strict **change assurance freeze** is currently in effect.
 
-          Please refer to the centrally managed
-          **Change Assurance Calendar** for exact dates.
+          Please refer to your repository's
+          **change-windows.yml** for exact dates.
 
-          If this change is **business-critical**,
-          please contact the Sainsbury's Tech Change Assurance Team for further assistance.
+          If this change is business-critical,
+          contact the Change Assurance team for guidance.
           "
 
           gh pr close ${{ github.event.pull_request.number }}

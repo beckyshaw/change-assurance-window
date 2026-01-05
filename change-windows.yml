@@ -1,6 +1,9 @@
+# Example file to be place in your .github/ directory to define change assurance windows
+
+# Format: yyyy-mm-dd HH:MM
 windows:
   - start: "2025-11-17 00:00"
     end:   "2026-01-05 23:59"
 
-  - start: "2026-04-01 09:00"
-    end:   "2026-04-03 18:00"
+  - start: "2026-01-07 17:00"
+    end:   "2026-01-09 10:00"
