@@ -6,4 +6,4 @@ on:
 
 jobs:
   enforce-ca:
-    uses: your-username/change-window-policy/.github/workflows/enforce-prod-change-assurance.yml@v1
+    uses: beckyshaw/change-window-policy/.github/workflows/enforce-prod-change-assurance.yml@v1
