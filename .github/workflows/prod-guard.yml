@@ -1,0 +1,9 @@
+name: Production Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  enforce-ca:
+    uses: your-username/change-window-policy/.github/workflows/enforce-prod-change-assurance.yml@v1

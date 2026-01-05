@@ -1,0 +1,93 @@
+name: Enforce Production Change Assurance
+
+on:
+  workflow_call:
+    inputs:
+      windows_file:
+        required: false
+        type: string
+        default: change-windows.yml
+      timezone:
+        required: false
+        type: string
+        default: UTC
+
+jobs:
+  block-prod-changes:
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout policy repo
+        uses: actions/checkout@v4
+
+      - name: Get changed files
+        id: changes
+        uses: tj-actions/changed-files@v45
+
+      - name: Detect /prod/ changes
+        id: detect
+        run: |
+          PROD_CHANGED=false
+          for f in ${{ steps.changes.outputs.all_changed_files }}; do
+            if [[ "$f" == *"/prod/"* ]]; then
+              echo "Detected prod file change: $f"
+              PROD_CHANGED=true
+              break
+            fi
+          done
+          echo "PROD_CHANGED=$PROD_CHANGED" >> $GITHUB_ENV
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/bin/yq \
+            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/bin/yq
+
+      - name: Check Change Assurance Window
+        id: date-check
+        shell: bash
+        run: |
+          NOW=$(TZ=${{ inputs.timezone }} date +%s)
+          IN_WINDOW=false
+
+          COUNT=$(yq '.windows | length' "${{ inputs.windows_file }}")
+
+          for i in $(seq 0 $((COUNT - 1))); do
+            START=$(yq ".windows[$i].start" "${{ inputs.windows_file }}")
+            END=$(yq ".windows[$i].end" "${{ inputs.windows_file }}")
+
+            START_TS=$(date -d "$START" +%s)
+            END_TS=$(date -d "$END" +%s)
+
+            if [ "$NOW" -ge "$START_TS" ] && [ "$NOW" -le "$END_TS" ]; then
+              IN_WINDOW=true
+              echo "Matched change window: $START → $END"
+              break
+            fi
+          done
+
+          echo "IN_CA_WINDOW=$IN_WINDOW" >> $GITHUB_ENV
+
+      - name: Comment and Close PR
+        if: env.PROD_CHANGED == 'true' && env.IN_CA_WINDOW == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "
+          🚫 **Production Change Denied**
+
+          Changes have been detected in a **prod** path.  
+          A strict **change assurance freeze** is currently in effect.
+
+          Please refer to the centrally managed
+          **Change Assurance Calendar** for exact dates.
+
+          If this change is **business-critical**,
+          please contact the Sainsbury's Tech Change Assurance Team for further assistance.
+          "
+
+          gh pr close ${{ github.event.pull_request.number }}
