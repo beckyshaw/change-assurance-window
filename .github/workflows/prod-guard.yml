@@ -1,4 +1,5 @@
-name: Production Guard
+# Place this file in .github/workflows/prod-guard.yml in your repository
+name: Change Assurance Window - Production Guard
 
 on:
   pull_request:
@@ -6,4 +7,7 @@ on:
 
 jobs:
   enforce-ca:
-    uses: beckyshaw/change-window-policy/.github/workflows/enforce-prod-change-assurance.yml@v1
+    uses: beckyshaw/change-window-policy/.github/workflows/enforce-change-assurance.yml@v1
+    with:
+      windows_file: change-windows.yml # this file is to be created in the .github/ of your repo
+      timezone: UTC # Replace with your desired timezone if needed
