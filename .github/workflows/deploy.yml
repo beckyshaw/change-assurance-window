@@ -1,9 +1,0 @@
-name: Production Guard - Change Assurance Period
-
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-jobs:
-  enforce-ca:
-    uses: beckyshaw/change-assurance-window/.github/workflows/enforce-change-assurance.yml@v1
