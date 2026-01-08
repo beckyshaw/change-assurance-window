@@ -6,7 +6,7 @@ on:
       windows_file:
         required: false
         type: string
-        default: .github/change-windows.yml
+        default: beckyshaw/change-assurance-window/.github/change-windows.yml
       timezone:
         required: false
         type: string
