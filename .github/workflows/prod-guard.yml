@@ -7,7 +7,7 @@ on:
 
 jobs:
   enforce-ca:
-    uses: beckyshaw/change-window-policy/.github/workflows/enforce-change-assurance.yml@v1
+    uses: beckyshaw/change-assurance-window/.github/workflows/enforce-change-assurance.yml@v1
     with:
       windows_file: change-windows.yml # this file is to be created in the .github/ of your repo
       timezone: UTC # Replace with your desired timezone if needed
